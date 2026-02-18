@@ -1,0 +1,7 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+help/*
+venv/*
+resource-metadata/output_jsons/*

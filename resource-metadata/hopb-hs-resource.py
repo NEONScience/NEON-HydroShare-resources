@@ -14,12 +14,11 @@ Script to create or edit the D01-HOPB NEON site resource in CUAHSI HydroShare
 import os
 import requests
 import json
-# from datetime import datetime
 from hsclient import HydroShare
 from hsmodels.schemas.fields import PointCoverage
-# from hsmodels.schemas.fields import PeriodCoverage
 from hsmodels.schemas.fields import AwardInfo
 from hsmodels.schemas.fields import Creator
+from hsmodels.schemas.fields import Rights
 
 # Make dir for outputs
 local_gh_dir = "C:/Users/nickerson/Documents/GitHub/NEON-HydroShare-resources/"
@@ -122,7 +121,12 @@ hopb_resource.metadata.creators.append(newCreator)
 # del hopb_resource.metadata.creators[0]
 
 # Set License statement
-# ZN -- need to get this information from someone at NEON
+# Set the rights statement and the URL that points to its description
+hopb_resource.metadata.rights.statement = (
+    'This resource is shared under the Creative Commons '
+    'Creative Commons CC0 1.0 “No Rights Reserved”'
+)
+hopb_resource.metadata.rights.url = 'https://www.neonscience.org/usage-policies'
 
 # Call the save function to save the metadata edits to HydroShare
 hopb_resource.save()
@@ -157,11 +161,21 @@ siteProducts["data"]["dataProducts"] = [
     if isinstance(dp, dict) and dp.get("dataProductCode") in hydroSet
 ]
 
+### LOAD THE HYDROLOGIC DATA PRODUCTS TO THE RESOURCE ###
+
 # Load this data as content to the resource
 outputPath = "./NEON_"+domainID+"_"+siteID+"_hydroDPs.json"
 with open(outputPath, "w") as f:
     json.dump(siteProducts, f, indent=4)
 hopb_resource.file_upload(outputPath)
+
+### LOAD THE HELPER SCRIPT README TO THE RESOURCE ###
+
+# The readme file will be the same for each resource
+# take it from the GitHub subdirectory and load it to the resource
+hopb_resource.file_upload(
+    local_gh_dir+"resource-metadata/helper_script_README.txt"
+    )
 
 ### ADD KEYWORDS TO RESOURCE SPECIFIC TO THE DATA PRODUCTS ###
 

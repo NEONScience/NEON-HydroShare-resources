@@ -26,26 +26,25 @@
 library(jsonlite)
 library(neonUtilities)
 
+# Load the hsclient library (non-CRAN)
+# require(remotes)
+# remotes::install_github("program--/HSClientR")
+library(HSClientR)
+
+### START -- USER INPUT REQUIRED ###
+
 # Set the domain and site you want to view
 domainID <- "D01"
 siteID <- "HOPB"
 
-# Unlike python, R currently does not contain a client package to access 
-# HydroShare resources. To run this R script, users must download the JSON file
-# from a NEON site resource in HydroShare and load the JSON into R.
+# Set the HydroShare resource ID for this site
+hsID = "8c46db88647d46578337400d961965a6"
 
-# Set path to downloaded json file 
-# If downloaded as a compressed file, must extract the file first
-fileName <- paste("NEON",
-                  domainID,
-                  siteID,
-                  "hydroDPs.json",
-                  sep = "_")
-hydroDPs <- jsonlite::fromJSON(
-  paste0("C:/Users/nickerson/Downloads/5a84c3c2-2d1f-40ae-b5ff-21d286b5347f/",
-         fileName)
-  )
-hydroDPs_df <- as.data.frame(hydroDPs)
+HSClientR::hs_auth()
+
+### END -- USER INPUT REQUIRED ###
+
+hsResource <- HSClientR::hs_resource(id = hsID)
 
 # Extract which relese we are working with
 currentRelease <- unique(hydroDPs_df$data.releases.release)

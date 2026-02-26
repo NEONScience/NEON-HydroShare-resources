@@ -1,1 +1,0 @@
-There are helper scripts coded in both R and Python that allow users to better interpret and explore the JSON file included in this resource. To access the helper scripts, visit the https://github.com/NEONScience/NEON-HydroShare-resources GitHub respository.

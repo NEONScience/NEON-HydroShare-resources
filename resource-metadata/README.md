@@ -1,1 +1,3 @@
-There are helper scripts coded in both R and Python that allow users to better interpret and explore the JSON file included in this resource. To access the helper scripts, visit the [NEON-HydroShare-resources](https://github.com/NEONScience/NEON-HydroShare-resources) GitHub respository.
+# Access R & Python Helper Scripts to Explore NEON Hydrology Data Products
+
+There are helper scripts coded in both R and Python that allow users to better interpret and explore the JSON file included in this resource. To access the helper scripts, visit the [NEON-HydroShare-resources](https://github.com/NEONScience/NEON-HydroShare-resources) GitHub respository. Users can clone the repository locally or download the invididual scripts to start exploring data products.

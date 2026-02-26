@@ -14,6 +14,7 @@ Script to create or edit the D01-HOPB NEON site resource in CUAHSI HydroShare
 import os
 import requests
 import json
+import pandas as pd
 from hsclient import HydroShare
 from hsmodels.schemas.fields import PointCoverage
 from hsmodels.schemas.fields import AwardInfo
@@ -155,26 +156,74 @@ responseSite = requests.get(
     headers={"X-API-TOKEN": os.environ.get("NEON_TOKEN"),
              "accept": "application/json"},)
 siteProducts = responseSite.json()
+
 # Subset down to only the 'Ecohydrology' data products
+# Produce the JSON to write out to resource
 siteProducts["data"]["dataProducts"] = [
     dp for dp in siteProducts["data"].get("dataProducts", [])
     if isinstance(dp, dict) and dp.get("dataProductCode") in hydroSet
 ]
 
-### LOAD THE HYDROLOGIC DATA PRODUCTS TO THE RESOURCE ###
+# Covert JSON to data frame to write out to resource
+data_dict = siteProducts['data']
+data_products = data_dict['dataProducts']
+
+# Get upstream data (everything except dataProducts)
+upstream_data = {k: v for k, v in data_dict.items() if k != 'dataProducts'}
+
+# Create list of dictionaries where each data product is merged with upstream data
+rows = []
+for product in data_products:
+    # Merge upstream data with each data product
+    row = {**upstream_data, **product}
+    rows.append(row)
+
+# Convert to DataFrame
+hydro_dps_df = pd.DataFrame(rows)
+
+### LOAD THE HYDROLOGIC DATA PRODUCT CATALOG (JSON) TO THE RESOURCE ###
 
 # Load this data as content to the resource
-outputPath = "./NEON_"+domainID+"_"+siteID+"_hydroDPs.json"
-with open(outputPath, "w") as f:
+outputPathJSON = "./NEON_"+domainID+"_"+siteID+"_hydroDPs.json"
+with open(outputPathJSON, "w") as f:
     json.dump(siteProducts, f, indent=4)
-hopb_resource.file_upload(outputPath)
+hopb_resource.file_upload(outputPathJSON)
+
+### LOAD THE AVAILABLE DATA PRODUCTS AS A DATA FRAME TO THE RESOURCE ###
+
+# Load this data as content to the resource
+outputPathCSV = "./NEON_"+domainID+"_"+siteID+"_hydroDPs.csv"
+hydro_dps_df.to_csv(outputPathCSV, index=False) 
+hopb_resource.file_upload(outputPathCSV)
+
+# Update metadata descriptions for each column in the csv
+agg = hopb_resource.aggregation(type="CSV")
+table = agg.metadata.tableSchema.table
+table.columns[0].description = "Abbreviated four-letter site code for a NEON site"
+table.columns[1].description = "Full name for NEON site"
+table.columns[2].description = "Full name for NEON site"
+table.columns[3].description = "Type of NEON site: either CORE (more pristine) or GRADIENT (more impacted)"
+table.columns[4].description = "Decimal Latitude - in degrees"
+table.columns[5].description = "Decimal Longitude - in degrees"
+table.columns[6].description = "Abbreviated United States state or territory name"
+table.columns[7].description = "Full United States state or territory name"
+table.columns[8].description = "Three digit code for the NEON Ecoclimate Domain of the site"
+table.columns[9].description = "Name for the NEON Ecoclimatic Domain of the site"
+table.columns[10].description = "URL to the site webpage in the Dynamic Ecological Information Management System"
+table.columns[11].description = "Information (name, generation date, URL) on the most recent NEON Data Release for this site and data product"
+table.columns[12].description = "Standard NEON Data Product ID for this hydrologic data product"
+table.columns[13].description = "NEON Data Product name for this hydrology data product"
+table.columns[14].description = "Each site-month available for this site and data product for the most recent NEON Data Release"
+table.columns[15].description = "URLs to the download package for each site-month available for this site and data product for the most recent NEON Data Release"
+table.columns[16].description = "Each site-month available for this site and data product for the most recent NEON Data Release"
+agg.save()
 
 ### LOAD THE HELPER SCRIPT README TO THE RESOURCE ###
 
 # The readme file will be the same for each resource
 # take it from the GitHub subdirectory and load it to the resource
 hopb_resource.file_upload(
-    local_gh_dir+"resource-metadata/helper_script_README.txt"
+    local_gh_dir+"resource-metadata/README.md"
     )
 
 ### ADD KEYWORDS TO RESOURCE SPECIFIC TO THE DATA PRODUCTS ###
@@ -192,6 +241,4 @@ hopb_resource.metadata.subjects = DPNames
 # Call the save function to save the metadata edits to HydroShare
 hopb_resource.save()
 
-#
-
-
+# End
